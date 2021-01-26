@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>Cole 搜索</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/js/vue.js"></script>
+    <script src="/js/axios.min.js"></script>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    body, html, #app {
+        height: 100%;
+    }
+
+    #app {
+        margin-top: -10px;
+    }
+
+    .search {
+        display: block;
+        width: 439px;
+        height: 36px;
+        border: 1px solid #C1C1C1;
+        outline: none;
+        border-radius: 9px 0 0 9px;
+        text-indent: 1em;
+        font-size: 19px;
+        /* margin: 19px auto; */
+        margin-top: 0;
+        margin-left: 20px;
+        /* margin-bottom: 2px !important; */
+        color: #215173;
+    }
+
+    .logo {
+        text-align: center;
+    }
+
+    .searchTip {
+        width: 439px;
+        /*background: #f5e5e3;*/
+        border: 1px solid #ccc;
+        margin: 0 auto;
+        border-radius: 6px;
+        overflow: hidden;
+        letter-spacing: 1px;
+    }
+
+    .searchTip {
+        list-style: none;
+        position: absolute;
+        left: 20px;
+        top: 35px;
+        background-color: #fff;
+        z-index: 99;
+    }
+
+    .searchTip > li {
+        height: 36px;
+        line-height: 36px;
+        cursor: pointer;
+        overflow: hidden;
+    }
+
+    .searchTip > li > a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding-left: 1em;
+        text-decoration: none;
+        color: #381313;
+    }
+
+    .searchTip > li > a:hover {
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+    }
+
+    /*出现动画*/
+    .v-enter {
+        opacity: 0;
+    }
+
+    .v-enter-to {
+        opacity: 1;
+    }
+
+    .v-enter-active {
+        transition: all 1s;
+    }
+
+    /*消失动画*/
+    .v-leave {
+        opacity: 1;
+    }
+
+    .v-leave-to {
+        opacity: 0;
+    }
+
+    .v-leave-active {
+        transition: all 1s;
+    }
+
+    .container {
+        /*background: beige;*/
+        width: 1220px;
+        max-width: 1220px;
+        margin: 0 auto;
+        height: 100%;
+        padding: 0 10px;
+    }
+
+    .res-item {
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    .res-item > h3 {
+        height: 30px;
+        line-height: 30px;
+        font-size: 17px;
+        color: #054e6b;
+    }
+
+    .res-item > .item-content {
+        margin-top: 10px;
+        letter-spacing: 1px;
+    }
+
+    .line {
+        width: 100%;
+        height: 1px;
+        background-color: olivedrab;
+        margin-top: 20px;
+
+    }
+
+    /* loading动画 */
+    #loading {
+        background-color: rgba(255, 255, 255, 1);
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        z-index: 1;
+        margin-top: 0px;
+        top: 0px;
+    }
+
+    #loading-center {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    #loading-center-absolute {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        height: 100px;
+        width: 100px;
+        margin-top: -50px;
+        margin-left: -50px;
+    }
+
+    .object {
+        width: 25px;
+        height: 25px;
+        background-color: rgba(255, 255, 255, 0);
+        margin-right: auto;
+        margin-left: auto;
+        border: 4px solid rgba(239, 74, 74, 1);
+        left: 37px;
+        top: 37px;
+        position: absolute;
+    }
+
+    #first_object {
+        -webkit-animation: first_object 1s infinite;
+        animation: first_object 1s infinite;
+        -webkit-animation-delay: 0.5s;
+        animation-delay: 0.5s;
+    }
+
+    #second_object {
+        -webkit-animation: second_object 1s infinite;
+        animation: second_object 1s infinite;
+    }
+
+    #third_object {
+        -webkit-animation: third_object 1s infinite;
+        animation: third_object 1s infinite;
+        -webkit-animation-delay: 0.5s;
+        animation-delay: 0.5s;
+    }
+
+    #forth_object {
+        -webkit-animation: forth_object 1s infinite;
+        animation: forth_object 1s infinite;
+    }
+
+    @-webkit-keyframes first_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(150%, 150%) scale(2, 2);
+            -webkit-transform: translate(150%, 150%) scale(2, 2);
+            transform: translate(150%, 150%) scale(2, 2);
+        }
+
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @keyframes first_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(150%, 150%) scale(2, 2);
+            -webkit-transform: translate(150%, 150%) scale(2, 2);
+            transform: translate(150%, 150%) scale(2, 2);
+        }
+
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @-webkit-keyframes second_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(-150%, 150%) scale(2, 2);
+            -webkit-transform: translate(-150%, 150%) scale(2, 2);
+            transform: translate(-150%, 150%) scale(2, 2);
+        }
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @keyframes second_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(-150%, 150%) scale(2, 2);
+            -webkit-transform: translate(-150%, 150%) scale(2, 2);
+            transform: translate(-150%, 150%) scale(2, 2);
+        }
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @-webkit-keyframes third_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(-150%, -150%) scale(2, 2);
+            -webkit-transform: translate(-150%, -150%) scale(2, 2);
+            transform: translate(-150%, -150%) scale(2, 2);
+        }
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @keyframes third_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(-150%, -150%) scale(2, 2);
+            -webkit-transform: translate(-150%, -150%) scale(2, 2);
+            transform: translate(-150%, -150%) scale(2, 2);
+        }
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @-webkit-keyframes forth_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(150%, -150%) scale(2, 2);
+            -webkit-transform: translate(150%, -150%) scale(2, 2);
+            transform: translate(150%, -150%) scale(2, 2);
+        }
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+
+    @keyframes forth_object {
+        0% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+        50% {
+            -ms-transform: translate(150%, -150%) scale(2, 2);
+            -webkit-transform: translate(150%, -150%) scale(2, 2);
+            transform: translate(150%, -150%) scale(2, 2);
+        }
+        100% {
+            -ms-transform: translate(1, 1) scale(1, 1);
+            -webkit-transform: translate(1, 1) scale(1, 1);
+            transform: translate(1, 1) scale(1, 1);
+        }
+    }
+</style>
+<body>
+<div id="app">
+    <div v-show="isShow === 1" style="width: 100%;position: fixed;top: 80px;left: 0;z-index: 999;">
+        <div style="padding: 6px 10px;background-color: #67C23A;width: 155px;margin: 0 auto;color: #fff;border-radius: 4px;">
+            正在加载请稍后...
+        </div>
+    </div>
+    <div v-show="isLast === 1" style="width: 100%;position: fixed;top: 80px;left: 0;z-index: 999;">
+        <div style="padding: 6px 10px;background-color: #67C23A;width: 162px;margin: 0 auto;color: #fff;border-radius: 4px;">
+            已经是最后一页啦...
+        </div>
+    </div>
+    <!-- loading 动画 -->
+    <div id="loading" v-show="isLoading === 1">
+        <div id="loading-center">
+            <div id="loading-center-absolute">
+                <div class="object" id="first_object"></div>
+                <div class="object" id="second_object"></div>
+                <div class="object" id="third_object"></div>
+                <div class="object" id="forth_object"></div>
+            </div>
+        </div>
+    </div>
+    <!-- loading结束 -->
+    <div>
+        <div style="width: 100%;background-color: #fff;position: fixed;top: 0;box-shadow:0 0 5px #888;margin-bottom: 100px;z-index: 990;">
+            <div class="container" style="margin: 6px auto;display: flex;justify-content: space-between;">
+
+                <div style="display: flex;justify-content: flex-start;align-items: center;">
+
+                    <a href="/">
+                        <img src="img/logo.png" alt="Cole" height="103" width="270">
+                    </a>
+                </div>
+                <div style="display: flex;justify-content: flex-start;align-items: center;">
+
+                    <a href="/">
+                        <!--                        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100px" height="56px" viewBox="0 0 641 361" enable-background="new 0 0 641 361" xml:space="preserve">  <image id="image0" width="641" height="361" x="0" y="0"-->
+                        <!--                            xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoEAAAFpCAMAAADUcgL4AAAABGdBTUEAALGPC/xhBQAAACBjSFJN-->
+                        <!--                        AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAnFBMVEX///8cHR0cHR0cHR0c-->
+                        <!--                        HR0cHR0cHR0cHR0cHR0cHR0cHR0cHR0cHR0cHR0cHR0cHR3IFh3IFh3IFh3IFh3IFh3IFh3IFh3I-->
+                        <!--                        Fh3IFh3IFh3IFh3IFh3IFh3IFh3IFh3IFh3IFh0EAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAE-->
+                        <!--                        AAAEAAAEAAAEAAAEAAAEAAAcHR3IFh0EAAD///8mbuczAAAAMHRSTlMAQIDA4PBQIJCgEHDQsDBg-->
+                        <!--                        EODwsECAoCAwcJDAYNBQ6NywYKBAMIAgUPDgwBCQ0HBfG6HRAAAAAWJLR0QAiAUdSAAAAAlwSFlz-->
+                        <!--                        AAALEgAACxIB0t1+/AAAAAd0SU1FB+QFHQoRF/YP0AcAACGMSURBVHja7Z0HWzK9EoYpIoqFYhf1-->
+                        <!--                        O0pRBJGX///jDlvZMpNkUjYLzn1d53z6uiWbfTZlZjJpNBiGYRiGYRiGYRiGYRiGYRiGYRiGYRiG-->
+                        <!--                        YRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiGYRiG-->
+                        <!--                        qQXNVvtkE9Bpt059F4b5a3TPOpssnfOu7yIxf4je+aYMa5CpitPOBqJz4btgzN/gfIPR7vkuG3P8-->
+                        <!--                        9C43OJcsQcYxQgGyBBnnXG02LEHGH62NjHPfRWSOmWupADcbtk4z7mgrKPDEdyGZ46WvIMDNpuW7-->
+                        <!--                        mMzRcqmkQG4EGUeojAJ5JMi440xRgVe+C8ocKWqd8GbT8V1Q5jjpKQpws7n2XVTmKGkqK7Dvu6jM-->
+                        <!--                        UXKhrEC2xzAukHvkEs58F5U5StQV2PZdVOYoYQUyfmEFMn5hBTJ+YQUyfmEFMn5hBTJ+YQUyfmEF-->
+                        <!--                        Mn5hBTJ+YQUyfmEFMn5hBTJ+YQUeKoPhvwKjm1vfhdKAFXio3P0DuPddKjoWFPhwV+ZBtzyPd4rc-->
+                        <!--                        atwCuviTZlGfoDLZfz+Ch4EU+O95f8AD8Odh/VpJcwU+jix+i+DFEIbPVPGMocuMHnUKegsWqdIm-->
+                        <!--                        CHyafw+SA7Se1iXmCrwHK0KzOGDXgnNP0yD8zoY6BYUV+K/KJuYFLMGdpIzP+jd0g7ECB1YbA6IC-->
+                        <!--                        /41eKFd/hS8y0CjoG3ypSt8v2F+MMk8ztPW9ucRYgfCXqNsWUBWY++b3PI4hEAH+GwLH7keyz+C1-->
+                        <!--                        sNECcOizq4bxGSxB5psE303dRoLGCgRfq/aHRlfgvxc7lymSDA9vzS8FfyXmPIA3y9T9wOYQ3RWm-->
+                        <!--                        CoRnZK+6410d6dzauUyRm+hSNhT4T9s0IOYGvNmbuB5GbsqijakCn/8ZMso1EDrSGQ5KpbKhwHgy-->
+                        <!--                        ZUWBT25eHjwYHe8PeIDGIjXrhk0VSLCeYGRqTE865U6ubgp01A034LvVzuAixFCBL7Q3AZMZyWlJ-->
+                        <!--                        p9yv1FOBD3sr9q0VYEPYrlsRUTd9GirwhvYmYDJjYz3plCYjNhQ4sqjAN2tXssB44Ft0FhX4YF4f-->
+                        <!--                        /3LdsJ50blwo8N6eAiMbnZWv1QavtZKgmQKt9HbmChw5KFfymh7NLxWbzcfmV7KEq2GpBwUO7dSI-->
+                        <!--                        sXSK07sBOALC5u03wLF7k8YbeC3Eug0NwZLYh/oo8NW36qwp0NbIxliBitYORAM69YY8uqh1qY8C-->
+                        <!--                        db32TjBS4L15XYTsDbaaClTsVliBMXUyCZoocGBeFcUKYQVWQp0GgiYKtGIMDBAr8ClvBINGYKxA-->
+                        <!--                        GjfKzymsA50o4RImCnw1r4qIQXpJQIHFgKfy+ghVBUJnBujYaJ/or7ZGCrQTohU80Pj+ybBLN1Gg-->
+                        <!--                        BY9cSEZjgAJL6hrLj3mT31T2jpLJ8MD4Oxs9D+qmQK2QyBLpNOD1+U3/giYKNH/PIdlGzpICbdgp-->
+                        <!--                        YwnamO+Pa6dAK1ORXC3vVFi9AsHVOkLL266gxUNfcmOJGinw1Z4Co36+Tgq0MhUptUA3L4OKFYiD-->
+                        <!--                        TVJkDqEaKdB6ZEKdFGhlKgK5i+gidLVeWPQqWIHesROmCl/7htYdswJRjlmBdqK2sScaUtaLswIx-->
+                        <!--                        hhYVeFs7BVqJEhQEyKsnEGEFYtzZU+ArVm5/2BCg2CUxVlxIe5wKROzFFBIb0YO51XP8UDsF2lkw-->
+                        <!--                        JwkPHSpp8DgV2ACD2t8QMT0Bx2aqmRIg/wocOsDL7YuRpcV7Q8l9VDR4nNYYBL9+YWtudGOGttaK-->
+                        <!--                        yIOjxtLxoIkC8TxXBIt03iR9zApsvNyMnYDpDDn8mZTpRIjKR3UjaW8NFEjJcyXEvl+4ngp0BTzv-->
+                        <!--                        ApZRW0dpndBIXCkGCrQ3rtlLkBWogTR7hzuGSu9XmLWwFgrch2p4mYncA8fuuw7jmYj7gGRYB45S-->
+                        <!--                        heRQTZnxPEAvUQ8Fpi+pPtaYm7jOLFhjrA38MeDPwVGqkBzK4VF4JqHjVKANi3Q8NLC3XrhqHdgJ-->
+                        <!--                        hJag/n1iHwQrEJVNdCl7ORPcAS/YqSRJFmGxWtKrFGAFokSXqnXmogQ4jruKFXGUKGW4J2YFokSX-->
+                        <!--                        OggFws9bSUphyjAZTBrPCkSJLlXn/IEpSB5R5/JrUNeMA8ZwViCG9Sh9l8At0cD1bRvkxUJlCR6g-->
+                        <!--                        AofyY2woMC6TDQW6T90M5+Wy534TMKTVRWloUA8FpsZTBQVCHoDiMbRc+iPg2DTCcgA7c7EneQWO-->
+                        <!--                        LfTByttGobyUjM2wg7aSpOXUPM7FQtVCgfv0bQoKhAYeiiN9RIIVrViPsbLGdVzQoEfHHDmHZKEV-->
+                        <!--                        NFCgtWijTMiWXIHgXQ/JL2znwy1OK4fgUZVk7CU/UH5wYJQ3Rr1zKqsuPeU+WyBAgbm6HsBtz99T-->
+                        <!--                        YHGiC/eFVTjmNBr1nAQtR6iqOmTHyPluc2fBr0nLaIG4ixWcH7YGL/lbeXTMaeQxzTYqx6FAx14v-->
+                        <!--                        q9hSYOGrgw+q5InocSDZVQJ2FQg3MtAubIiTUFOBVQQi2cKWAscql63k0xzQw4cyQ3+bCnyE55ov-->
+                        <!--                        4FfyCqpGT4G12y9ShCMFwg1RNXt9ary1vU3GogKf4E/hGal20Emop8Da7ZkrwlEv7NExp9MI7mcj-->
+                        <!--                        1hQ4QLbLuEfLCO0NrKdAsDn1uDRNmMnMzUwEc8xVMz7ReG1pA2RLgbdYBHz8d3CuZmlDOHhaY+lF-->
+                        <!--                        azJ6xt69G2sMFiJQiWNOqxFMHsCSAjHXzL67vxH/2USBsN3Vzos2ADERubFIe3XM6b23O4sKfMQ8-->
+                        <!--                        rpnnh5M4F1ew6zwJMgq08qKNgCMynXjlGph3rKLdhLEU3ULsKfAFa4NzHyDsRSis4tFQIDbYtvGi-->
+                        <!--                        DQEnW4LIhHI/cQMe9wb28HAzUNFWmjqjblsKHKA79hV6ALinHuViyekKRFcBOVIVrXDEiUBxLEfy-->
+                        <!--                        aXh0zDW0BheWFHg7xG5QyhGD9NUSv7DkHaPfuDNZUSBaQ4r9BCm6H+5kxpRLGKCxA6QdBeKSKScp-->
+                        <!--                        wgppsL+wYCmuM1WRoK0QMVIg8sQD0jX0ocYJ2lHgA77ZBpQlC3Mg7l10RAWKUnG5UxUF2lJhMwXC-->
+                        <!--                        w6GqfOb0yUh0nqvdXWFtYIOFdLxDU6DQF2Jr20VDjDpSmgJ9OuYaGusZotPMFIgaIpHGCUuBkSqQ-->
+                        <!--                        YqoYStbDorudOAHrDUg+azMFPpoXwAhqPxydZabANyxF3QCr4nvo8Jv9aO5lrMhdnXYoDesC+boo-->
+                        <!--                        5hAzBXrMYBRC7Yejs1xl8f2DIKNcijnEUIE+HXMBxPlwdBIr0BrIdssUv5ihAmGzcDWB0iG0WNXo-->
+                        <!--                        HFagPeB6phjkDBXoMYNRDGn6F51ipsDBrUcq8jcpgzimKlSgxwxGMaS9cKNTjBRovveuGWPR7lHW-->
+                        <!--                        0lybUqECYWNWlamFKQk/LSjwRv1ursB3C6iLAKtUIGySqyZQOobw4VtQYC32aMEsP77LlVKhAj1m-->
+                        <!--                        MEpRj5I5FgViKYp9FyulSgX6dcwRJXg0CkTiY3yXKqVKBcLmkIoCpakSPB4FwmF4vguVUqUCPWYw-->
+                        <!--                        okvwiBQIjrV9lymlSgX6dszFPN6GId/jV4WKOQ4FQq/Kd5FSKlWg30DpMoPbl7vxSFQxR6JAIAyv-->
+                        <!--                        JtFZFSvQZwYjnIeX51esYo5EgdC7qtpHg3Q5lEGYuQIR57RnBUYqvBlBhToWBVbp/ERAXn6VXjn0-->
+                        <!--                        ndQklO3tPivC6N+ORYF1qGO4YBXGxgR43FpEiZe9yTL6B1agNZA2sML4wACfGYzUeLgbsQKdgKxx-->
+                        <!--                        oVhCLCiwDo45KS9Ddwo03rJehVoqEInOJLU+NhTocWsRAoEGo58sK7CaB4Vs7iUFIhuBuAILCSHV-->
+                        <!--                        iA0Fes1gFNPM0MPKGRsJLCuwoicE7K4lBXqOXYyhDcBsKNCnY67Zb7XbnbJ02q2LJnbOYSoQGHKV-->
+                        <!--                        FOhbe0ixhNhQoKcMRs2LqxOxgE6uLrrAiaxApxDdYVYUWL1j7vqirSiiq3JTeJgKVOmFfYsvgDr6-->
+                        <!--                        sqJA2DHnLIPR9dmJsoYCGRXbwYNUIBQJXkcFku3AVhRY5dYiXZr8Ajr9/CVcKfDRfHaJMoQquGR2-->
+                        <!--                        8y0/MFN7JQqsbGuR/iVVfiHnVSiw8oVq5U6m4gKUuNcIyrOjwGoyGHVbHWXtiCToSIE2tpgmUZ5z-->
+                        <!--                        eo3Oer3TCgq1o8AqHHPdc135FSV4JAqExtnV5s7a83J7O9B8r3YU6H5rETP97bg4OgXWLX+CJpYU-->
+                        <!--                        6DiDUe/MUH87rtOrHYcC/UWh28WSAt1mMNIf/2W43F/uGBRY8WpEd1hSoMsMRk2y+QUmtckcgwI1-->
+                        <!--                        BAinXPLel1tSoDvHnI0OOOIkueQRKFCjCx4obCwRHudosoJNCmwpEHbMmWcwstUAZhvBg1fgWOfL-->
+                        <!--                        RlMuqR5nCmKcs6VAN1uL2GsAA67cKrCivG6je73AVDS4W/U4Y+CG25YCnWwtcq3nAUHpOVVgFfGh-->
+                        <!--                        z/rJzP0rEI7Xs6ZABxmM+jamwFlO3Sqw3vhXIFxT1hRo3zFntQcOaUUXZgUepQJtB0r3VAMACcSC-->
+                        <!--                        YgXWSIGl0bNo1zIxQ/Cmuo65ruUhICtQVYE6u+aq8Z9a2NlQNBC+eRqgTwg75jR9R9e2h4AR0cUt-->
+                        <!--                        K3BAeTB/qCqw8Wgnpcz/XAkZ3bzKZgYjRwLcRFe3rED9bqNSlBVoCVcCxCvcomPOlQA30eWPJmeC-->
+                        <!--                        Gk+Sgjvyyzl8IkyC1rYWcSbAkz+pwAdJwce3TtKNunwkZL5sa2sRZwJ0NBOpOeNKCj4sReK5vBuy-->
+                        <!--                        h7alrUXcCTAJlP5bCnypqODjgioqeagCVjIYdd0JMImT/lMKHFZW8ELAWJX3SrDhmOu5sAMmXP9B-->
+                        <!--                        Bb5VV/D8lMbprZCQFxsZjFwKMAkQ/EsK3FvD3G+Ilx/yO70VokALjjnT9UhCWn9PgZkhu/vwxbws-->
+                        <!--                        nN4Ka9aG4NEEe1PfpQA3SfaOP6TATN0Tt6PXoEIFYmvgTDMYOZwGbzJLhv+OAl8qLXmFChzAAjJ1-->
+                        <!--                        zDmdhWw6aQKjv6LAUX4SeGt+RTH5ULzq7pTBcGsRp4PAzJL1P6LA0g6wz+bXFJJ3f7l8MqwJNNxa-->
+                        <!--                        5NSpADNi+hMKHAHOKLdpZQrzU3dzb1EoiMnWIj2ng8DLTHJpIwW6bkgsAWexenKY3quoC2edPhqd-->
+                        <!--                        FWCSwejKpQA715k7GSmwPrsH4rzeYS9pcOdoQd+ofMtHFwu3bp4kYRT6GYyaLgV4mRWgoQIPHidb-->
+                        <!--                        HPp+qBTtDEY9iyvTy0LK7+/wxxV43Gg75tRVQaZzoX0vVuDBATvm5IHSDiNizksbOrACjxnNDEY2-->
+                        <!--                        TIEn7YDCv7WADUVYgceMnmOua6a9dquf2TWk2W9d7YR42T6/uAbvxgo8ZvS2FjFYnd45P6WWkRV4-->
+                        <!--                        1MDmIvE5+paYK7L8GqzAI0cnUFp3FHjeVSxUHlbgUaORwUhzFKipP1bgkQM75oSB0lpN4OW1aolK-->
+                        <!--                        sAKPmyHVMdfTEWBLvUAlWIGHRBNA3PuRHXMXdP2d6DeADVMFnrUBrnro3a7bBM4yJ/Zzf8nuzti8-->
+                        <!--                        olwzX9Br6bMQgOeB1xe08vUbAsCo5U5TdAp5axG6R7jda5hgpEAkr+YFejeatydzncJHl3nD5ArL-->
+                        <!--                        vrxM+6Hx7RfAGqNTUri7wKCBmEmuGgKoGYzoppjzhhlGCkRMl/hHSXu2zOgi/2Vm6tzMgZTRuHmW-->
+                        <!--                        WvyxKYUUDKmQtWvi4RHRMUeuT1MBulAgXofED6yFFbMvK4LGHcyXJgp6Q0K85yXapzWRHkSsQOLW-->
+                        <!--                        ItSYBGMBOlBg2kU2m608Z8THy+gjZ6TqSD8CVbIDQeOQuESBp+kDnyYdMyXm/TI+OSlbV/aIYgXS-->
+                        <!--                        thahrg4xF6ADBcY9W9c8yDHbmGZbkTNZEbQeybgRjBWY68eSomoMFpJQdmn7KTFSkDIYEct51TDH-->
+                        <!--                        vgKhF6FHVoFZfXRlRVAl32+afjLR1QouhWt9ebcVn1CiQJJjjtZLXZrNgl0p0IY0InIDyn3dtKVF-->
+                        <!--                        0Hsi00YwUmBhrBs/g46335ICYcccHChNK2bHyA7oToFxC2W5DczMVfvSIigSSWY3RotvZNgIihSo-->
+                        <!--                        Y+uxpEBKBiOaQeBCdNtoyczAhwJjg5aFrCPR2+tF4/nU8HciLwLpgXY10Il6E8NGEFTgqc6rzZXP-->
+                        <!--                        VIEUxxzJconf9+0+vefw5kWiQvsKTKZHvYvzvalfS46t+JWe52on+td23AUYKDBtAtOv2awRbAIX-->
+                        <!--                        SbYS17myLQWqby1C8wkjFviH++LcR7z9pAN7IGwXu74gv4VEgVETlXRkSYvYNFRgNpF23K6aNYLx-->
+                        <!--                        c3f3brirZMCgdWFbClTPYESyxZyBNxuAeh8LQiEcKLCDzZCouzMmCoxGfvEHGhkAzs0VmGkC07Gl-->
+                        <!--                        USOIW6T1RiS2FKjumKOMFeC3/IYkohjha1NceOVQXznxTaQKvExUt4kHVoFuDBWY30vARiOIKrCp-->
+                        <!--                        NyS2pUD1rUUolQl6vgRpXG4GFSpwdyyyLor2hlMFRla1sI+IpHKxMVZg3myZxCiYNIKoAjXXf1tT-->
+                        <!--                        oHIGI0rpoCZQmMQFy7HkRoHhS83EWaUvh/SG9wo8T09upT+ZKTB5ml4+KMqkEaytAlUzGFHijCB3-->
+                        <!--                        nCSLECJBdwoEC0yySuwVGA06grJ2k38yVCAmF4NGML5kLw40bPWTyaJmKj5rClR1zFHKCfRx0kxq-->
+                        <!--                        sDO6IgVqeaf2CoxmCt1OPA+52r9wTQWib82gEYwVmLGpmbWs9hQIO+ZKgdKEtvqkfJM3mQCRiJyq-->
+                        <!--                        FKjjncooMJqLdLOuVyMF4vNW/UYwumauKzujV1Spwi0oUDGDESGGrGyKGaikY4QMg1UpMPYNkDqk-->
+                        <!--                        jAJzrX7UlZsoUPDS9BtByCfS1/jwCoW0oEBFxxy9S8uglEoSyp5ZkQIT34DmODD/0UXGDRMFJkO2-->
+                        <!--                        FrBoRLsRhBR4ZXBRewpU3FpE3WjUKd3hQUWA4BIpJwosLQlKgwk058K5Z+5nX7hJ/5aPnkhMrNqN-->
+                        <!--                        IOgXpjcvxVLaUKBaBiP1opXjAhWz6QIBES4UiK/3ooWIZBWYuehl9oVrKTDxn0G3028EQQXGsvYZ-->
+                        <!--                        mdBQdMwRkiWUzNEDNQFCC1QcKBB2GIZo+kRyt0+G+tEL18m4DTaB5o0gqMAmtZpLxbShQKUMRoTB-->
+                        <!--                        amki96KqwLIdvNKVSg3aK8gpMA3FSHTT1JZLEylN8u+ajWDsaM7/Y1df1XFXJ20+VRIWwPtu5AOl-->
+                        <!--                        CQosOUSUt6sod8NGCgT9vKLQbVJnFMdf5du89Bod7UjYtI0ufEDp6uFrra49mWzlxJaMHXr0S6b1-->
+                        <!--                        2GoLUcqYoZLBiKDA0vXVd8YoRcmoKxDyw3SBLBLCtQPXTXV6uXPS+X+vkKyiS7hkIcuF4h+U2Nsn-->
+                        <!--                        unYuaWMNRoqKY05dCpfFyyvOhANKJkH125pkp2F8o7C1iEF3SNixp+QXYQX+DRQyGBkoUHkiYqRA-->
+                        <!--                        zp11yCg45gykQNgxnBX4R1HYWoQVyLhEnsHIQApPrEBGhtwxV/uZiI0cIYw35BmMqlFgKTZB3aDL-->
+                        <!--                        c+HDBhbEYH8AIXJO8eKyfj9E3VbPCjxspBmMTHwi6js1l05V94GyAg8bqWPOJDJBeTJcXiivfldW-->
+                        <!--                        4GEj3VqEsFSur3ZxlWGgie6Zw2IISiLjmFPXQjkAT7EbHg2KJxJCRlmBB47UMaeuhVJogqpfrrxa-->
+                        <!--                        jhDbpLtvGFMTpIHShNxtZTEMVQRYbgIpQcu+K5AxRJrBiBDDWF6IoWQSLOcvIgw+TxrMgSPLYERY-->
+                        <!--                        SgC4J6QpE8DFmoSYZXbKHTywyWQ/NKOsIyvHzw6kk5ERkEWQsCLirMEcOHBHuW+YKOvqgRzSD7JQ-->
+                        <!--                        fWAjJ0oGA2HaauYgkGUwIsgBGpQ9iiUIbehJWerIxpjDR+aYoyQyhxaFPwo64hG0lR1pP3fftceY-->
+                        <!--                        I9tahLLuEJyZDtBVm69gJmnKDS8bzMEjy2BESmkBZ8aAE0mP4J0USVvz8kTkGBiCEkybJ5IiTuDl-->
+                        <!--                        pIO7kgZH90gqfdIiauHe38yBIAuUJmVVQUNVXnJ98fhpgBxHyy3LPrljQOaYoyWgEGwrd/t0dzMe-->
+                        <!--                        j+/uBPt6Uba85WHgkYCkuEr/TktvY7i1Ji3plHAY+P6hcf/JNPlppnzOfG7rVdhiOp1mfvuc536t-->
+                        <!--                        IXAGo9QxR9vWy2x/a+Jmj6eCS31ttwuyNHYnfcfCXW6/l/NV+ONKeM7ndrtcyS5cLbvH2C6+kt+m-->
+                        <!--                        u9+2Op9jZci2FiFtbWg0OyDNeqCsrRmWwVugfvvBSdv38Mef4Mfg/NX7eiU753vWmBUO+vy0/6ZU-->
+                        <!--                        CTS3+Mz+tpV9Ix9TqKH8nE6rkK4sgxF1F1ptPwV1ozNRcxu+hLQnzXapM/FJyVnz3Y9BGzr93rVx-->
+                        <!--                        ghv9BudsJ5F4s3jpm7+m01n0HJOden4/f3fCClrE5TRAUKRS8VPAw+e7HgJnjZyFInHMkZwUG/1N-->
+                        <!--                        rnvUHI2iTngdVPt8R1AjQf1+J3UjkNNObNv1aracNSIFThurSfgWftBTptHfVzVRYKEUUxU1QSfK-->
+                        <!--                        FSiBVmzZ1iLUPId6EuwRe3thJ/yTrY1lY5L5bYKeNA9bwJ9AhdEvX/NFdM43dspskQy5WIEGCpRl-->
+                        <!--                        MCIne9WR4DU5S61gJvyRq41lrsJQZczCd/a5iNq8/SkTfDQZCTDstj+meb68zD+Xi7ilD9r8750C-->
+                        <!--                        g1+3SQ8g0MVsmo4Ug+P34xf4MT6W7/M9Qd+R+XX+sxSNWwBkjjmakS6EPB3R2OwWl3kowN9ghDbf-->
+                        <!--                        DaXn86hL3fErUOAqqMeP+OSvVIETwYziay/AuvCxnMznQZO/nL8vP3a/7oYi4W+74ciP2iWW5CaM-->
+                        <!--                        fkYRWQYjelZkqseWOtvZiMzRs++wsw1G4PEXPI+raCpQ4HvSQwc9+GIVKnAR2GM+sdYsOmTWqJO5-->
+                        <!--                        Ldc9zvO/KjZMPhQoc8wRrSSRQAges57O7gdoM7vatXvfu6HcPO5NVtOZXIHToBbXYYsZjiHf5+mh-->
+                        <!--                        0+071A7O1rEAdy9gWZt28EAVCDvmMhmMdNK4d5Tjl091dvvG5yHF4XfQB8kUOCuds05b0Dl80nQd-->
+                        <!--                        CzC8n2IP55jVbDr/igYbk+l0Pl/Nd8OQafTb9ON3qmSjXHhQoHRrEb3tVC6VLINdvU3Y8HQdOgoM-->
+                        <!--                        DTElIgVOMIHNt+vP5FTi0NsRxUcv/q40P6dPZSMFfpjM/qVbi2hup9KWarCrMcYMm0Dc/6ylwGj2-->
+                        <!--                        HEwZg8lc0Lolw8LZXoulOwXzx9Ak/WtQ+RbRVODnNOsy2eatT/k/goQK/BEZuqRIMxhpb6zXFpmN-->
+                        <!--                        G01N/Qn9Iauws1nFprzJqqEyDmxMPjI1PVl8RCOodXSVNX630HrzPYeovmeGFLiObTNr/Nkl1j3p-->
+                        <!--                        RCtQYPgh6ktQvrWI/hbLJ2eI2aR7YbB5vWyeswrrPVTPLB7KzSMzBToXXi5/EnPWeh3OpFMEE43Q-->
+                        <!--                        +YLYc7Xfhy6rqKAfsRhmq+CjCmQY+bpXyDjQhgJX72YSHIISzIQxG+wzv+syz/sFFXb7Zwbykydt-->
+                        <!--                        mwYt03oV9q2Lr1wVYy1TTkXLrFvlWyDAQNOLz7ooMGD33MGXt8h6aXe/iYRkQ4FRVeiHCcm3FjES-->
+                        <!--                        TMBluxVzpTf3yEpaHIX4GVZGEB0SOi22X1mFYHOGgiPvY9cYfoXeDZGl5TfS9HKR98tv17v/Lnwp-->
+                        <!--                        kCykaTYwJjQypbE0q+n0SzqDjufCYa2vNSUo31pEa0t4VwibwK+wP4jmqaEE16t9D7tcviOnBQ3B-->
+                        <!--                        ZB7PQyZRuyCb3YVtbPGoqUqz4Q5UgWrhYp/RwaSpVWKN+TWQIBwonc1prrlzvROE+YoiS3HaHcwW-->
+                        <!--                        32pVMk+FE4oqqM3I4baarASn1E6B89950Uc9nU6UxwTxM32rHR2R2gNNJPgqVSA1SMshwvl1OAlZ-->
+                        <!--                        /M6SZu899aFPhA7zgjdhmgwZPxbI+Doae9dOgWiYi9rZiWGUEpm6t0gbdMTPUgVq7cjtBFnCrM/F-->
+                        <!--                        +yfg5ZB82YAC57G3DpTgNHxX30emwHBcETRlij1Hesf4R30JghmM8mvKyRGkjuhIPc7hiAd6CcQ2-->
+                        <!--                        cD5N3iagqLiu66jActTyt6ICQyvqJPx/gocj65VLAzzIQIHShX1/azIZUfQ3b4uGYgUF/oaDplSB-->
+                        <!--                        SXzq5B2aD+8awd3HXjcFzpZzg3HgTzRlCb9G9WiLrAJ3YyBNoyCwXmlYPIaQWtIdqkkrS4KjKzBq-->
+                        <!--                        N7+wM1Y/q0btFFj2SSYoKCo0wwej39CiqNyX5iITVrquoMFI1gRqBNI7QN4Hx2zDaKsM9F549xYm-->
+                        <!--                        svd2OAqUlym0noYDwBlpOGchNiagNBJ8Lh+jEyhoGeXoawvjwO+P6B18im9TKwXO1sufeWz8XGwX-->
+                        <!--                        qY/6+1vaBkbm+6joJLuKJQUWU1w9Q8doxDLbRX1BvI4C18t4XcU8F8SwfP8U3aZWClwF61qm28Xy-->
+                        <!--                        J/QVJkaV6UK6miD0ZKYnRBMttbGgLQU2HjJBWsM3+BidaGaLEJKCbLO+0VhYMgVmLNI5BQqWi9RN-->
+                        <!--                        gb/hY4ZaSuLKfmahkUUiwagP2M8iIs+mkm/EmgIbjce7ccjzG3aE36Gg8iCwoTcTQRQYNA7YfKRm-->
+                        <!--                        Clx9JzaiRWTcW3zuBDIJ57giCU7XBQHGEtwuFR5F1dZjB41FbfagpGOwp8CpaGJYMwXOo+Fb/Kzv-->
+                        <!--                        YUcafkAL0UMkds+8IyReZb2Uuke2lSrQ52yEtAZUZxw4bfz+Tid7e2AYqfCz2OJG1lzMaxRO/O5R-->
+                        <!--                        gbPInpcocLX4WYUmlrVgdrv6iT1xpTQ7v3G1yfriihVoFipoAi0tl54CJ8lc+DN3It56ZBW49wR6-->
+                        <!--                        UmAYl/sTP3zw+ez+t44bt49iL5sSx6W9l59x9o39pVTVlT6nJwkS88JRFTgJhTNLu6NsvCA+gtoH-->
+                        <!--                        ICfX2EZjMC9Mko9lnX/u0B/+gZpXAnF+gwPd1c9WwclWuQJ1VrBXLsDSsO9TosBl1HSFX30UFPMe-->
+                        <!--                        zZ+Xyx/cGJO3c0+R7qwyZpNoypRbY5B8QD+olD4Wc7SRX2MBlSkrD62+BwlSk7POtoVQmA9J2xQE-->
+                        <!--                        RU+D//zKF4ftKXhaFtvFcvLhM6Fl/LF8zt8TK9TcdXlWgcep6meuXILk7MCzMG1bhs9cLDpz6FQs-->
+                        <!--                        QaPcwMxRUql/jgXIlKlwRswCZCCaVXlHeOckBoae9lSHDu/gymD0KljBeamZF535GzhfP3dutkcT-->
+                        <!--                        c/Q0nfbEHR4CMjK0MvAq0ua9MxkFtJLwqjSAymmAmT9Oz4mDhBtARp2m9dj9k1PzUjF/ib7VrrjT-->
+                        <!--                        4ikwQ6TXsqdBNsEwOtjS4DkPABlNei1j62CnxfpjTOgbOepO+tz/MqZ0dbPkd845BoGxw+k5fUR4-->
+                        <!--                        xQ44xibNM4KJ8OScrX+Mfbp9FRWenPd57sG4o3lx1sa65PZ5q8kzD6YKms1+q9Vqx5y1WhdNnnUw-->
+                        <!--                        DMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMwDMMw-->
+                        <!--                        DMMwDMMwDMMwDMMwDHOA/B/5tIRJUWjV3gAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMC0wNS0yOVQx-->
+                        <!--                        MDoxNzoyMyswMzowMOR04pAAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjAtMDUtMjlUMTA6MTc6MjMr-->
+                        <!--                        MDM6MDCVKVosAAAAAElFTkSuQmCC" />-->
+                        <!--                        </svg>-->
+                    </a>
+                    <div style="position: relative;">
+                        <input class="search" v-model.trim="name" placeholder="请输入搜索关键字"
+                               @keyup.enter="keywordSearch(name)"/>
+                        <transition>
+                            <ul class="searchTip" v-if="flag">
+                                <li v-for="(item,index) in searchTipList" :key="index" @click="keywordSearch(item)"><a
+                                        href="#">{{item}}</a></li>
+                            </ul>
+                        </transition>
+                    </div>
+                    <div @click="keywordSearch"
+                         style="padding: 6px 12px;height: 36px;background-color: #1588F5;cursor: pointer;color: #fff;">
+                        搜索一下
+                    </div>
+
+                </div>
+
+            </div>
+            <div style="display: flex;justify-content: center;align-items: center;position: absolute;right: 20px;top: 16px;">
+                <input class="Included"
+                       style="margin: 0;padding: 4px 6px;width: 260px;border-radius: 8px 0 0 8px;outline: none;background:none;border:1px solid #C1C1C1"
+                       v-model="includedData" placeholder="请输入要收录的网站"/>
+                <div @click="includedURL"
+                     style="padding: 6px 12px;border-radius: 0 8px 8px 0;height: 34px;background-color: #1588F5;cursor: pointer;color: #fff;">
+                    收录
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 92px">
+            <!-- <h2 style="text-align: center">搜索结果：</h2> -->
+        </div>
+        <div class="container res-item " v-for="(item,index) in itemList" :key="index" @click="articleDetail(item.id)">
+            <h3 v-html="item.title"></h3>
+            <div class="item-content" v-html="item.description">
+            </div>
+            <div class="line"></div>
+        </div>
+        <div v-if="totalRecord === 0" class="alert alert-primary" role="alert"
+             style="text-align: center;margin-top: 36px;">
+            提示：当前未查询到任何数据
+        </div>
+        <nav v-else style="margin-top: 20px;" aria-label="Page navigation example">
+            <!-- <div style="color: coral">当前共查询到{{totalRecord}}条数据</div> -->
+            <ul class="pagination" style="justify-content: center;">
+                <li class="page-item" :class="{ disabled : pageIndex === 1}"><a class="page-link" href="#"
+                                                                                @click.stop="previousPage">上一页</a></li>
+                <li class="page-item"><a class="page-link" href="#" @click.stop="nextPage">下一页</a></li>
+                <li class="page-item"><span class="page-link" href="#">第{{ pageIndex }}页</span></li>
+                <li class="page-item"><span class="page-link" href="#">共{{ totalPage }}页</span></li>
+
+            </ul>
+        </nav>
+
+    </div>
+</div>
+</body>
+<script>
+    let vue = new Vue({
+        //3.第三步
+        el: '#app',
+        data() {
+            return {
+                itemList: [],
+                pageSize: 10,
+                pageIndex: 1,
+                totalRecord: 0,
+                totalPage: 0,
+                repeatClick: false,
+                name: '',
+                flag: false,
+                searchTipList: [],
+                entryKeyWord: '',
+                includedData: '',
+                clickURL: '',
+                isShow: 0,
+                isLoading: 0,
+                isLast: 0
+            }
+        },
+        watch: {
+            'name': async function (newVal) {
+                if (!newVal) {
+                    this.flag = false;
+                } else {
+                    const {data: res} = await axios.get(
+                        "/search/auto",
+                        {
+                            params: {
+                                keyword: newVal
+                            }
+                        }
+                    );
+                    this.searchTipList = res.data;
+                    console.log(res.data);
+                    if (this.searchTipList.length !== 0) {
+                        this.flag = true;
+                    } else {
+                        this.flag = false;
+                    }
+                }
+            }
+        },
+        methods: {
+            // 搜索
+            keywordSearch(item) {
+                // this.name = '';
+                this.pageIndex = 1
+                item = this.name
+                this.flag = false;
+                this.searchTipList = [];
+                item = item.replace(/\{/g, "").replace(/\}/g, "").replace(/\[/g, "").replace(/\]/g, "").trim();
+                if (!item) return;
+                this.entryKeyWord = item
+                this.searchPage(this.pageIndex, this.pageSize);
+            },
+            // 收录网址
+            async includedURL() {
+                let that = this
+                const {data: res} = await axios.get(
+                    "/spider",
+                    {
+                        params: {
+                            url: that.includedData
+                        }
+                    }
+                );
+                alert(res.message)
+            },
+            nextPage() {
+                let that = this
+                if (this.pageIndex === this.totalPage) {
+                    this.isLast = 1
+                    setTimeout(function () {
+                        that.isLast = 0
+                    }, 2000)
+                    return false
+                }
+                this.pageIndex = this.pageIndex + 1;
+                this.searchPage(this.pageIndex, this.pageSize);
+            },
+            previousPage() {
+                this.pageIndex = this.pageIndex - 1;
+                this.searchPage(this.pageIndex, this.pageSize);
+            },
+            /**
+             * 获取url参数
+             * @return {string}
+             */
+            GetQueryValue(queryName) {
+                let query = decodeURI(window.location.search.substring(1));
+                let vars = query.split("&");
+                for (var i = 0; i < vars.length; i++) {
+                    var pair = vars[i].split("=");
+                    if (pair[0] === queryName) {
+                        this.entryKeyWord = pair[1]
+                        this.name = pair[1]
+                        this.searchPage(this.pageIndex, this.pageSize)
+                        return pair[1];
+                    }
+                }
+
+                return '';
+            },
+            async searchPage(pageIndex, pageSize) {
+                // const keyword = this.GetQueryValue("keyword");
+                // console.log('keyword',keyword);
+                this.isLoading = 1
+                const keyword = this.entryKeyWord;
+                if (!keyword) return alert("请输入搜索关键字!");
+                const {data: res} = await axios.get(
+                    "/search",
+                    {
+                        params: {
+                            pageIndex: pageIndex,
+                            pageSize: pageSize,
+                            keyword: keyword
+                        }
+                    }
+                );
+                this.flag = false
+                this.itemList = res.data.data;
+                this.totalRecord = res.data.count;
+                this.pageIndex = res.data.pageIndex;
+                this.pageSize = res.data.pageSize;
+                this.totalPage = res.data.totalPage;
+                this.isLoading = 0
+            },
+            async articleDetail(id) {
+                let that = this
+                if (that.clickURL === id) {
+
+                    that.isShow = 1
+                    setTimeout(function () {
+                        that.isShow = 0
+                    }, 2000)
+
+                    return false;
+                }
+                this.clickURL = id
+                this.repeatClick = true;
+                const {data: res} = await axios.get(
+                    "/solve",
+                    {
+                        params: {
+                            id: id
+                        }
+                    }
+                );
+                //todo 换成服务器url
+                // window.open(`http://10.0.0.46/${res.data}.html`);
+                window.open(`http://10.0.0.14:88/html/${res.data}.html`);
+                this.repeatClick = false;
+                this.clickURL = ''
+
+            }
+        },
+        created() {
+            this.GetQueryValue("keyword")
+            // this.searchPage(this.pageIndex,this.pageSize);
+        }
+    });
+</script>
+</html>

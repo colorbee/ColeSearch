@@ -1,0 +1,22 @@
+server:
+  port: 9911
+
+spring:
+  data:
+    elasticsearch:
+      cluster-nodes: 10.0.0.13:9300,10.0.0.14:9300,10.0.0.15:9300
+      cluster-name: es-cluster
+  elasticsearch:
+    rest:
+      uris: ["http://10.0.0.13:9200","http://10.0.0.14:9200","http://10.0.0.15:9200"]
+  thymeleaf:
+    cache: false
+  mvc:
+    static-path-pattern: /**
+
+solve:
+  detail:
+    destPath: /home/kugs/IdeaProjects/github/bee-search/html
+#    destPath: /var/data/html
+
+#    destPath: D:\soft\nginx-1.16.1\html

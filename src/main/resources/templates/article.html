@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文章详情</title>
+    <script src="/js/vue.js"></script>
+    <script src="/js/axios.min.js"></script>
+</head>
+<body>
+    <div id="app" style="padding: 60px;">
+        <h2 style="text-align: center;margin-top: -19px;">{{title}}</h2>
+        <div v-html="content"></div>
+    </div>
+</body>
+<script>
+    let vue = new Vue({
+        //3.第三步
+        el: '#app',
+        data() {
+            return {
+                content: '',
+                title: ''
+            }
+        },
+        methods: {
+
+        },
+        async created() {
+            let query = decodeURI(window.location.href.substring(window.location.href.indexOf("?")));
+            const id = query.substring(4);
+            console.log(id);
+            const {data: res} = await axios.get(
+                "/search/getById",
+                {
+                    params: {
+                        id: id
+                    }
+                }
+            );
+            console.log(res.data.content);
+            this.content = res.data.content;
+            this.title = res.data.title;
+        }
+    });
+</script>
+</html>
