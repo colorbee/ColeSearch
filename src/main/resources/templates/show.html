@@ -8,28 +8,721 @@
 </head>
 
 <body>
-<div id="app">
-    <div style="margin: 200px auto;display: flex;flex-direction: column;justify-content: center;align-items: center;">
-        <dev>
-            <img src="img/logo.png" alt="Cole" height="103" width="270">
-        </dev>
-        <div style="display: flex;justify-content: flex-start;align-items: center;margin-top: 40px;">
-            <div style="position: relative;">
-                <input class="search" v-model.trim="name" placeholder="Keyword" @keyup.enter="keywordSearch(name)"/>
-                <transition>
-                    <ul class="searchTip" v-if="flag">
-                        <li v-for="(item,index) in searchTipList" :key="index" @click="keywordSearch(item)">
-                            <a href="#">{{item}}</a>
-                        </li>
-                    </ul>
-                </transition>
-            </div>
-            <div @click="keywordSearch"
-                 style="padding: 0 12px;height: 48px;line-height: 46px;background-color: #d71cc4;cursor: pointer;color: #fff;border-radius: 0 9px 9px 0;">
-                Cole
-            </div>
-        </div>
-    </div>
+<div id="article_content">
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>本篇文章是<a href="https://www.imooc.com/article/15612">SpringBoot项目实战（6）：开启定时任务</a>一文的修订版。</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>在开发程序中总是避免不了一些周期性定时任务，比如定时同步数据库、定时发送邮件、定时初始化数据等等。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>那么在springboot中如何使用定时任务呢？ 本文将由浅入深逐渐揭开定时任务的“神秘面纱”。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>本文知识点：</p>
+ </div>
+ <div class="cl-preview-section">
+  <ol>
+   <li>springboot中如何使用Scheduler</li>
+   <li>springboot中如何动态修改Scheduler的执行时间（cron）</li>
+   <li>springboot中如何实现多线程并行任务</li>
+  </ol>
+ </div>
+ <div class="cl-preview-section">
+  <p>想了解springboot中的Scheduler？看懂本文妥妥的了~！</p>
+ </div>
+ <div class="cl-preview-section">
+  <h1 id="如何使用scheduler？">如何使用Scheduler？</h1>
+ </div>
+ <div class="cl-preview-section">
+  <ol>
+   <li>使用<code>@EnableScheduling</code>启用定时任务</li>
+   <li>使用<code>@Scheduled</code>编写相关定时任务</li>
+  </ol>
+ </div>
+ <div class="cl-preview-section">
+  <h2 id="开启定时任务">开启定时任务</h2>
+ </div>
+ <div class="cl-preview-section">
+  <p>在程序中添加<code>@EnableScheduling</code>注解即可启用Spring的定时任务功能，这类似于Spring的XML中的<code>&lt;task:*&gt;</code>功能。</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>@SpringBootApplication
+@EnableScheduling
+public class ScheduleApplaction {
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(ScheduleApplaction.class, args);
+    }
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <h2 id="关于scheduled">关于@Scheduled</h2>
+ </div>
+ <div class="cl-preview-section">
+  <p>通过查看Scheduled注解类的源码可知该注解支持如下几种方式使用定时任务</p>
+ </div>
+ <div class="cl-preview-section">
+  <ol>
+   <li>cron()</li>
+   <li>fixedDelay()</li>
+   <li>fixedDelayString()</li>
+   <li>fixedRate()</li>
+   <li>fixedRateString()</li>
+   <li>initialDelay()</li>
+   <li>initialDelayString()</li>
+  </ol>
+ </div>
+ <div class="cl-preview-section">
+  <p>注：由于xx和xxString方法只是参数类型不同用法一致，所以本文对xxString表达式方法不做解释。感兴趣的同学可以去查阅下<code>ScheduledAnnotationBeanPostProcessor</code>类的<code>processScheduled</code>方法。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h2 id="cron">cron</h2>
+ </div>
+ <div class="cl-preview-section">
+  <p>这个也是定时任务中最常用的一种调度方式，主要在于它的功能强大，使用方便。<br> 支持cron语法，与linux中的crontab表达式类似，不过Java中的cron支持到了秒。<br> 表达式规则如下：</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>{秒} {分} {时} {日} {月} {周} {年(可选)}</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>这儿有很多朋友记不住，或者和crontab的表达式记混。</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>Tips：linux的crontab表达式为：<code>{分} {时} {日} {月} {周}</code></p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>其实这儿也没有很好的记忆方式，采用最简单的方式：死记硬背即可（( ╯╰ )）。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>cron各选项的取值范围及解释：</p>
+ </div>
+ <div class="cl-preview-section">
+  <div class="table-wrapper">
+   <table>
+    <thead>
+     <tr>
+      <th align="center">项</th>
+      <th align="center">取值范围</th>
+      <th align="center">null</th>
+      <th align="center">备注</th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td align="center">秒</td>
+      <td align="center">0-59</td>
+      <td align="center">否</td>
+      <td align="center">参考①</td>
+     </tr>
+     <tr>
+      <td align="center">分</td>
+      <td align="center">0-59</td>
+      <td align="center">否</td>
+      <td align="center">参考①</td>
+     </tr>
+     <tr>
+      <td align="center">时</td>
+      <td align="center">0-23</td>
+      <td align="center">否</td>
+      <td align="center">参考①</td>
+     </tr>
+     <tr>
+      <td align="center">日</td>
+      <td align="center">1-31</td>
+      <td align="center">否</td>
+      <td align="center">参考②</td>
+     </tr>
+     <tr>
+      <td align="center">月</td>
+      <td align="center">1-12或JAN-DEC</td>
+      <td align="center">否</td>
+      <td align="center">参考①</td>
+     </tr>
+     <tr>
+      <td align="center">周</td>
+      <td align="center">1-7或SUN-SAT</td>
+      <td align="center">否</td>
+      <td align="center">参考③</td>
+     </tr>
+     <tr>
+      <td align="center">年</td>
+      <td align="center">1970-2099</td>
+      <td align="center">是</td>
+      <td align="center">参考①</td>
+     </tr>
+    </tbody>
+   </table>
+  </div>
+ </div>
+ <div class="cl-preview-section">
+  <p><strong>参考①</strong></p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>“*” 每隔1单位时间触发；<br> "," 在指定单位时间触发，比如"10,20"代表10单位时间、20单位时间时触发任务<br> "-" 在指定的范围内触发，比如"5-30"代表从5单位时间到30单位时间时每隔1单位时间触发一次<br> "/" 触发步进(step)，"/“前面的值代表初始值(”<em>“等同"0”)，后面的值代表偏移量，比如"0/25"或者"</em>/25"代表从0单位时间开始，每隔25单位时间触发1次；"10-45/20"代表在[10-45]单位时间内每隔20单位时间触发一次</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p><strong>参考②</strong></p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>“* , - /” 这四个用法同①<br> "?" 与{周}互斥，即意味着若明确指定{周}触发，则表示{日}无意义，以免引起 冲突和混乱；<br> “L” 如果{日}占位符如果是"L"，即意味着当月的最后一天触发<br> "W "意味着在本月内离当天最近的工作日触发，所谓最近工作日，即当天到工作日的前后最短距离，如果当天即为工作日，则距离为0；所谓本月内的说法，就是不能跨月取到最近工作日，即使前/后月份的最后一天/第一天确实满足最近工作日；因此，"LW"则意味着本月的最后一个工作日触发，"W"强烈依赖{月}<br> “C” 根据日历触发，由于使用较少，暂时不做解释</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p><strong>参考③</strong></p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>“* , - /” 这四个用法同①<br> "?" 与{日}互斥，即意味着若明确指定{日}触发，则表示{周}无意义，以免引起冲突和混乱<br> "L" 如果{周}占位符如果是"L"，即意味着星期的的最后一天触发，即星期六触发，L= 7或者 L = SAT，因此，“5L"意味着一个月的最后一个星期四触发<br> ”#" 用来指定具体的周数，"#“前面代表星期，”#"后面代表本月第几周，比如"2#2"表示本月第二周的星期一，"5#3"表示本月第三周的星期四，因此，“5L"这种形式只不过是”#“的特殊形式而已<br> "C” 根据日历触发，由于使用较少，暂时不做解释</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>其他关于cron的详细介绍请参考<a href="https://www.imooc.com/article/13060">Spring Task 中cron表达式整理记录</a></p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>/**
+ * 在11月7号晚上22点的7分到8分之间每隔半分钟（30秒）执行一次任务
+ *
+ * @author zhangyd
+ */
+@Scheduled(cron = "0/30 7-8 22 7 11 ? ")
+public void doJobByCron() throws InterruptedException {
+	int index = integer.incrementAndGet();
+	System.out.println(String.format("[%s] %s doJobByCron start @ %s", index, Thread.currentThread(), LocalTime.now()));
+	// 这儿随机睡几秒，方便查看执行效果
+	TimeUnit.SECONDS.sleep(new Random().nextInt(5));
+	System.out.println(String.format("[%s] %s doJobByCron end   @ %s", index, Thread.currentThread(), LocalTime.now()));
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>查看打印的结果</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>[1] Thread[pool-1-thread-1,5,main] doJobByCron start @ 22:07:00.004
+[1] Thread[pool-1-thread-1,5,main] doJobByCron end   @ 22:07:01.004
+[2] Thread[pool-1-thread-1,5,main] doJobByCron start @ 22:07:30.001
+[2] Thread[pool-1-thread-1,5,main] doJobByCron end   @ 22:07:30.001
+[3] Thread[pool-1-thread-1,5,main] doJobByCron start @ 22:08:00.001
+[3] Thread[pool-1-thread-1,5,main] doJobByCron end   @ 22:08:01.002
+[4] Thread[pool-1-thread-1,5,main] doJobByCron start @ 22:08:30.002
+[4] Thread[pool-1-thread-1,5,main] doJobByCron end   @ 22:08:33.002
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>给大家安利一款在线生成Cron表达式的神器：<a href="http://cron.qqe2.com">http://cron.qqe2.com</a>。使用简单，一看就会。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h2 id="fixeddelay">fixedDelay</h2>
+ </div>
+ <div class="cl-preview-section">
+  <p>上一次任务执行完成后，延时固定长度时间执行下一次任务。关键词：<strong>上一次任务执行完成后</strong><br> 就如<a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/annotation/Scheduled.html#fixedDelay--">官方文档</a>中所说：在最后一次调用结束到下一次调用开始之间以毫秒为单位进行等待，等待完成后执行下一次任务</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>通过代码可以更好的理解</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>private AtomicInteger integer = new AtomicInteger(0);
+/**
+ * 上次任务执行完的3秒后再次执行
+ *
+ * @author zhangyd
+ */
+@Scheduled(fixedDelay = 3000)
+public void doJobByFixedDelay() throws InterruptedException {
+	int index = integer.incrementAndGet();
+	System.out.println(String.format("[%s] %s doJobByFixedDelay start @ %s", index, Thread.currentThread(), LocalTime.now()));
+	// 这儿随机睡几秒，方便查看执行效果
+	TimeUnit.SECONDS.sleep(new Random().nextInt(10));
+	System.out.println(String.format("[%s] %s doJobByFixedDelay end   @ %s", index, Thread.currentThread(), LocalTime.now()));
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>查看控制台输出</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>[1] Thread[pool-1-thread-1,5,main] doJobByFixedDelay start @ 18:28:03.235
+[1] Thread[pool-1-thread-1,5,main] doJobByFixedDelay end   @ 18:28:06.236
+[2] Thread[pool-1-thread-1,5,main] doJobByFixedDelay start @ 18:28:09.238
+[2] Thread[pool-1-thread-1,5,main] doJobByFixedDelay end   @ 18:28:10.238
+[3] Thread[pool-1-thread-1,5,main] doJobByFixedDelay start @ 18:28:13.240
+[3] Thread[pool-1-thread-1,5,main] doJobByFixedDelay end   @ 18:28:21.240
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>可以看到不管每个任务实际需要执行多长时间，该任务再次执行的时机永远都是在上一次任务执行完后，延时固定长度时间后执行下一次任务。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h2 id="fixedrate">fixedRate</h2>
+ </div>
+ <div class="cl-preview-section">
+  <p><a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/annotation/Scheduled.html#fixedRate--">官方文档</a>中已经很明白的说明了此方法的用法。</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>Execute the annotated method with a fixed period in milliseconds between invocations.</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>按照固定的速率执行任务，无论之前的任务是否执行完毕。关键词：<strong>不管前面的任务是否执行完毕</strong></p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>private AtomicInteger integer = new AtomicInteger(0);
+/**
+ * 固定每3秒执行一次
+ *
+ * @author zhangyd
+ */
+@Scheduled(fixedRate = 3000)
+public void doJobByFixedRate() throws InterruptedException {
+	int index = integer.incrementAndGet();
+	System.out.println(String.format("[%s] %s doJobByFixedRate start @ %s", index, Thread.currentThread(), LocalTime.now()));
+	// 这儿随机睡几秒，方便查看执行效果
+	TimeUnit.SECONDS.sleep(new Random().nextInt(10));
+	System.out.println(String.format("[%s] %s doJobByFixedRate end   @ %s", index, Thread.currentThread(), LocalTime.now()));
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>查看控制台打印的结果</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>[1] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:23.520
+[1] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:24.521
+[2] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:26.515
+[2] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:31.516
+[3] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:31.516
+[3] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:31.516
+[4] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:32.515
+[4] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:39.516
+[5] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:39.516
+[5] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:40.517
+[6] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:40.517
+[6] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:41.517
+[7] Thread[pool-1-thread-1,5,main] doJobByFixedRate start @ 18:57:41.517
+[7] Thread[pool-1-thread-1,5,main] doJobByFixedRate end   @ 18:57:47.519
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>这儿需要重点关注<strong>每个任务的起始时间</strong>和<strong>下一次任务的起始时间</strong>。如果说我们不看这个结果，直接就代码来说，我们会认为，程序每隔3秒执行一次，第二次任务和第一次任务的间隔时间是3秒，没毛病。但是我们通过上面打印的日志发现，程序并不是按照我们预想的流程执行的。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>注：为方便阅读，任务命名为<code>T+任务的编号</code>，比如T1表示第一个任务，以此类推。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>从上面结果看，T1起始时间到T2起始时间之间间隔了3秒，T2起始时间到T3起始时间间隔了5秒，T3起始时间到T4起始时间间隔了1秒。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>为什么会有这种现象呢？这正如上面所说：“<strong>按照固定的延迟时间执行任务，无论之前的任务是否执行完毕</strong>”</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>那么按照这种规则，咱们预先估计下每次任务的执行时间就能解释上面的问题。T1起始时间是23秒，T2起始时间是26，以此类推，T3理论上是29，T4是32，T5是35，T6是38，T7是41…</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>这种机制也可以称为“<strong>任务编排</strong>”，也就是说从<code>fixedRate</code>任务开始的那一刻，它后续的任务执行的时间已经被<strong>预先编排</strong>好了。如果定时任务<em>执行的时间</em> <strong>大于</strong><code>fixedRate</code>指定的<em>延迟时间</em>，则定时任务会在上一个任务结束后<em>立即执行</em>；如果定时任务<em>执行的时间</em> <strong>小于</strong><code>fixedRate</code>指定的<em>延迟时间</em>，则定时任务会在上一个任务结束后等到<em>预编排的时间</em>时执行。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h2 id="initialdelay">initialDelay</h2>
+ </div>
+ <div class="cl-preview-section">
+  <p>该条指令主要是用于配合<code>fixedRate</code>和<code>fixedDelay</code>使用的，作用是在<code>fixedRate</code>或<code>fixedDelay</code>任务第一次执行之前要延迟的毫秒数，说白了：它的作用就是在程序启动后，<strong>并不会立即执行该定时任务</strong>，它将在延迟一段时间后才会执行该定时任务</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>Number of milliseconds to delay before the first execution of a fixedRate() or fixedDelay() task.</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>本例为了方便测试，需要首先知道这个定时任务的bean在什么时候装载完成，或者说这个定时任务的bean什么时候初始化完成，所以，需要处理一下代码。</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>@Component
+public class AppSchedulingConfigurer implements ApplicationListener&lt;ContextRefreshedEvent&gt; {
+
+    private AtomicInteger integer = new AtomicInteger(0);
+
+
+    /**
+     * 第一次延迟5秒后执行，之后按fixedRate的规则每3秒执行一次
+     *
+     * @author zhangyd
+     */
+    @Scheduled(initialDelay = 5000, fixedRate = 3000)
+    public void doJobByInitialDelay() throws InterruptedException {
+        int index = integer.incrementAndGet();
+        System.out.println(String.format("[%s] %s doJobByInitialDelay start @ %s", index, Thread.currentThread(), LocalTime.now()));
+        // 这儿随机睡几秒，方便查看执行效果
+        TimeUnit.SECONDS.sleep(new Random().nextInt(5));
+        System.out.println(String.format("[%s] %s doJobByInitialDelay end   @ %s", index, Thread.currentThread(), LocalTime.now()));
+    }
+
+    /**
+     * Spring容器初始化完成
+     */
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
+        System.out.println(String.format("springboot上下文context准备完毕时. %s start @ %s", Thread.currentThread(), LocalTime.now()));
+    }
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>如上，使用Spring的事件监听应用启动的时间，以此打印出<code>initialDelay</code>应该从什么时候开始等待。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>(关于Spring和Springboot的事件，本文不做深入介绍，后期会专文讲解这一块内容)</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>查看打印结果</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>springboot上下文context准备完毕时. Thread[main,5,main] start @ 21:18:42.092
+[1] Thread[pool-1-thread-1,5,main] doJobByInitialDelay start @ 21:18:47.023
+[1] Thread[pool-1-thread-1,5,main] doJobByInitialDelay end   @ 21:18:51.024
+[2] Thread[pool-1-thread-1,5,main] doJobByInitialDelay start @ 21:18:51.024
+[2] Thread[pool-1-thread-1,5,main] doJobByInitialDelay end   @ 21:18:53.025
+[3] Thread[pool-1-thread-1,5,main] doJobByInitialDelay start @ 21:18:53.025
+[3] Thread[pool-1-thread-1,5,main] doJobByInitialDelay end   @ 21:18:57.025
+[4] Thread[pool-1-thread-1,5,main] doJobByInitialDelay start @ 21:18:57.025
+[4] Thread[pool-1-thread-1,5,main] doJobByInitialDelay end   @ 21:18:57.025
+[5] Thread[pool-1-thread-1,5,main] doJobByInitialDelay start @ 21:18:59.025
+[5] Thread[pool-1-thread-1,5,main] doJobByInitialDelay end   @ 21:19:00.025
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>由此可以明显看出，<code>initialDelay</code>确实是在bean上下文准备完毕（容器已初始化完成）时延迟了5秒钟后执行的<code>fixedRate</code>任务。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h1 id="如何动态修改执行时间（cron）？">如何动态修改执行时间（cron）？</h1>
+ </div>
+ <div class="cl-preview-section">
+  <p>实现动态配置cron的好处就是可以随时修改任务的执行表达式而不用重启服务。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>想实现这种功能，我们只需要实现SchedulingConfigurer接口重写configureTasks接口即可。</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>@Component
+public class DynamicScheduledConfigurer implements SchedulingConfigurer {
+
+    // 默认每秒执行一次定时任务
+    private String cron = "0/1 * * * * ?";
+    private AtomicInteger integer = new AtomicInteger(0);
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.addTriggerTask(() -&gt; {
+            int index = integer.incrementAndGet();
+            System.out.println(String.format("[%s] %s 动态定时任务 start @ %s", index, Thread.currentThread(), LocalTime.now()));
+        }, triggerContext -&gt; {
+            CronTrigger trigger = new CronTrigger(this.getCron());
+            return trigger.nextExecutionTime(triggerContext);
+        });
+    }
+
+    public String getCron() {
+        return cron;
+    }
+
+    public void setCron(String cron) {
+        System.out.println(String.format("%s Cron已修改！修改前：%s，修改后：%s @ %s", Thread.currentThread(), this.cron, cron, LocalTime.now()));
+        this.cron = cron;
+    }
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>例子中默认的<code>cron</code>表示每秒执行一次定时任务，我们要做的就是动态修改这个执行时间。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>接下来编写一个controller负责处理cron以及预编排5组该cron将要执行的时间节点</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>@SpringBootApplication
+@Controller
+@EnableScheduling
+public class ScheduleApplaction {
+
+    @Autowired
+    DynamicScheduledConfigurer dynamicScheduledConfigurer;
+
+    public static void main(String[] args) {
+        SpringApplication.run(ScheduleApplaction.class, args);
+    }
+
+    @RequestMapping("/")
+    public String index() {
+        return "index";
+    }
+
+    /**
+     * 修改动态定时任务的cron值
+     */
+    @RequestMapping("/updateTask")
+    @ResponseBody
+    public void updateTask(String cron) {
+        dynamicScheduledConfigurer.setCron(cron);
+    }
+
+    /**
+     * 预解析5次该cron将要执行的时间节点
+     *
+     * @param cron 带解析的cron
+     * @return
+     * @throws IOException
+     */
+    @RequestMapping("/parseCron")
+    @ResponseBody
+    public List&lt;String&gt; parseCron(String cron) throws IOException {
+        String urlNameString = "http://cron.qqe2.com/CalcRunTime.ashx?CronExpression=" + URLEncoder.encode(cron, "UTF-8");
+        URL realUrl = new URL(urlNameString);
+        URLConnection connection = realUrl.openConnection();
+        connection.setRequestProperty("accept", "*/*");
+        connection.setRequestProperty("connection", "Keep-Alive");
+        connection.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
+        connection.connect();
+
+        StringBuilder result = new StringBuilder();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                result.append(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return JSONArray.parseArray(result.toString(), String.class);
+    }
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>html页面</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/&gt;
+    &lt;title&gt;动态修改cron&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;div&gt;
+    &lt;input type="text" name="cron" id="cron" value="0/2 * * * * ?" title="cron"&gt;
+    &lt;button type="button" id="submitBtn"&gt;提交&lt;/button&gt;
+
+    &lt;dl id="parserBox"&gt;
+        &lt;dt&gt;最近5次运行的时间&lt;/dt&gt;
+    &lt;/dl&gt;
+&lt;/div&gt;
+&lt;script class="lazyload" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAANSURBVBhXYzh8+PB/AAffA0nNPuCLAAAAAElFTkSuQmCC" data-original="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    $(function () {
+        $("#submitBtn").click(function () {
+            var cron = $("#cron").val();
+            $.post("/updateTask", {cron: cron});
+            $.getJSON("/parseCron?cron=" + encodeURIComponent(cron), function (rs) {
+                var html = '';
+                $.each(rs, function (i, v) {
+                    html += '&lt;dd&gt;' + v + '&lt;/dd&gt;';
+                });
+                var $parserBox = $("#parserBox");
+                $parserBox.children("dd").remove();
+                $parserBox.append(html);
+            })
+        });
+    })
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>启动项目后先查看控制台输出，默认应该是每秒执行一次定时任务。</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>[1] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:00:23.010
+[2] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:00:24.001
+[3] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:00:25.001
+[4] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:00:26.002
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>接下来修改一下默认cron，如下图，将定时任务修改为每5秒执行一次</p>
+ </div>
+ <div class="cl-preview-section">
+  <p><img src="//img1.sycdn.imooc.com/5be4017d0001393a06050391.png" title="" alt="图片描述"></p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>[56] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:18.002
+[57] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:19.001
+Thread[http-nio-8080-exec-7,5,main] Cron已修改！修改前：0/1 * * * * ?，修改后：0/5 * * * * ? @ 14:01:19.963
+[58] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:20.001
+[59] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:25.002
+[60] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:30.002
+[61] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:35.002
+[62] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:40.001
+[63] Thread[pool-1-thread-1,5,main] 动态定时任务 start @ 14:01:45.002
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>ok，到此为止就实现了动态修改定时任务的功能。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h1 id="如何实现多线程并行任务">如何实现多线程并行任务</h1>
+ </div>
+ <div class="cl-preview-section">
+  <p>通过上面几个例子，可能细心的朋友已经发现了一个规律：上面所有的定时任务都是单线程的。</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>其实也正式如此，如<a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/annotation/EnableScheduling.html">官方文档</a>中解释的：</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>By default, will be searching for an associated scheduler definition: either a unique TaskScheduler bean in the context, or a TaskScheduler bean named “taskScheduler” otherwise; the same lookup will also be performed for a ScheduledExecutorService bean. If neither of the two is resolvable, a local single-threaded default scheduler will be created and used within the registrar.</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>大概意思就是：默认情况下会检索是否指定了一个自定义的<code>TaskScheduler</code>，如果没有的情况下，会创建并使用一个本地单线程的任务调度器（线程池）。这一点，可以在<code>ScheduledTaskRegistrar</code>类（定时任务注册类）中加以佐证：</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>public void afterPropertiesSet() {
+	this.scheduleTasks();
+}
+
+protected void scheduleTasks() {
+	if (this.taskScheduler == null) {
+		this.localExecutor = Executors.newSingleThreadScheduledExecutor();
+		this.taskScheduler = new ConcurrentTaskScheduler(this.localExecutor);
+	}
+	// ...
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>那么我们如何将调度器改造成多线程形式的呢？继续向下看<a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/annotation/EnableScheduling.html">文档</a></p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>When more control is desired, a @Configuration class may implement SchedulingConfigurer. This allows access to the underlying ScheduledTaskRegistrar instance.</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <p>意思很明了，我们可以通过实现<code>SchedulingConfigurer</code>接口，然后通过<code>ScheduledTaskRegistrar</code>类去注册自定义的线程池。在<code>SchedulingConfigurer</code>类中已经提供了一个<code>setScheduler</code>方法用来注册自定义的Scheduler Bean</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>public void setScheduler(Object scheduler) {
+	Assert.notNull(scheduler, "Scheduler object must not be null");
+	if (scheduler instanceof TaskScheduler) {
+		this.taskScheduler = (TaskScheduler)scheduler;
+	} else {
+		if (!(scheduler instanceof ScheduledExecutorService)) {
+			throw new IllegalArgumentException("Unsupported scheduler type: " + scheduler.getClass());
+		}
+
+		this.taskScheduler = new ConcurrentTaskScheduler((ScheduledExecutorService)scheduler);
+	}
+
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>接下来我们就按照这种方式扩展一个<code>SchedulingConfigurer</code>，代码如下：</p>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>@Component
+public class MultiThreadSchedulingConfigurer implements SchedulingConfigurer {
+
+    private AtomicInteger integer = new AtomicInteger(0);
+
+    @Scheduled(cron = "0/1 * * * * ?")
+    public void multiThread() {
+        System.out.println(String.format("[1] %s exec @ %s", Thread.currentThread().getName(), LocalTime.now()));
+    }
+
+    @Scheduled(cron = "0/1 * * * * ?")
+    public void multiThread2() {
+        System.out.println(String.format("[2] %s exec @ %s", Thread.currentThread().getName(), LocalTime.now()));
+    }
+
+    @Scheduled(cron = "0/1 * * * * ?")
+    public void multiThread3() {
+        System.out.println(String.format("[3] %s exec @ %s", Thread.currentThread().getName(), LocalTime.now()));
+    }
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar scheduledTaskRegistrar) {
+        scheduledTaskRegistrar.setScheduler(newExecutors());
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    private Executor newExecutors() {
+        return Executors.newScheduledThreadPool(10, r -&gt; new Thread(r, String.format("ZHYD-Task-%s", integer.incrementAndGet())));
+    }
+}
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>如代码所示，我们自定义一个容量为10得线程池，并且自定义一下线程池中线程得命名格式，同时为了方便查看，我们同时开启三个定时任务，在同样的时间同时执行，以此来观察定时器在并行执行时的具体线程分配情况</p>
+ </div>
+ <div class="cl-preview-section">
+  <p>注意在上面的例子中自定义线程池时，使用了<code>@Bean</code>注解的(destroyMethod=“shutdown”)属性，这个属性可确保在Spring应用程序上下文本身关闭时正确关闭定时任务。</p>
+ </div>
+ <div class="cl-preview-section">
+  <blockquote>
+   <p>Note in the example above the use of @Bean(destroyMethod=“shutdown”). This ensures that the task executor is properly shut down when the Spring application context itself is closed.</p>
+  </blockquote>
+ </div>
+ <div class="cl-preview-section">
+  <pre><code>[2] ZHYD-Task-2 exec @ 15:44:14.008
+[1] ZHYD-Task-3 exec @ 15:44:14.008
+[3] ZHYD-Task-1 exec @ 15:44:14.008
+[2] ZHYD-Task-1 exec @ 15:44:15
+[1] ZHYD-Task-3 exec @ 15:44:15
+[3] ZHYD-Task-2 exec @ 15:44:15
+[1] ZHYD-Task-4 exec @ 15:44:16.001
+[3] ZHYD-Task-6 exec @ 15:44:16.001
+[2] ZHYD-Task-5 exec @ 15:44:16.001
+[1] ZHYD-Task-1 exec @ 15:44:17.002
+[2] ZHYD-Task-7 exec @ 15:44:17.002
+[3] ZHYD-Task-2 exec @ 15:44:17.002
+[1] ZHYD-Task-1 exec @ 15:44:18.001
+</code></pre>
+ </div>
+ <div class="cl-preview-section">
+  <p>通过上面的结果可以看出，每个定时任务的执行线程都不在是固定的了。</p>
+ </div>
+ <div class="cl-preview-section">
+  <h1 id="总结">总结</h1>
+ </div>
+ <div class="cl-preview-section">
+  <ol>
+   <li>springboot中通过<code>@EnableScheduling</code>注解开启定时任务，<code>@Scheduled</code>支持<code>cron</code>、<code>fixedDelay</code>、<code>fixedRate</code>、<code>initialDelay</code>四种定时任务的表达式</li>
+   <li>springboot中通过实现<code>SchedulingConfigurer</code>接口并且重写<code>configureTasks</code>方法实现动态配置<code>cron</code>和多线程并行任务</li>
+  </ol>
+ </div>
+</div>
+<div>
+ <div class=""></div>
+ <div class="showMore">
+  <span>点击查看更多内容</span>
+ </div>
 </div>
 </body>
 <style>
